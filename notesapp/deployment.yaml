@@ -18,6 +18,6 @@ spec:
       - name: dockerhub-secret
       containers:
       - name: todo-app
-        image: rashmidevops1/my-note-app:microdegree
+        image: nandini88847/my-note-app
         ports:
         - containerPort: 8000
