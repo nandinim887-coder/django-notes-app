@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'nandini88847'
+        DOCKERHUB_USER = 'nandinim88847'
         IMAGE_NAME     = 'my-note-app'
         IMAGE_TAG      = 'microdegree'
         FULL_IMAGE     = "${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
