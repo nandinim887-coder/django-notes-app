@@ -1,58 +1,82 @@
 pipeline {
-    agent any 
-    
+    agent any
+
     environment {
-        DOCKER_IMAGE = "my-note-app"
+        DOCKERHUB_USER = 'rashmidevops1'
+        IMAGE_NAME     = 'my-note-app'
+        IMAGE_TAG      = 'microdegree'
+        FULL_IMAGE     = "${DOCKERHUB_USER}/${IMAGE_NAME}:${IMAGE_TAG}"
     }
-    
-    stages{
-        
-        stage("Clone Code"){
+
+    stages {
+
+        stage('Code Cloning') {
             steps {
-                echo "Cloning the code"
-                git branch: "main", url: "https://github.com/nandinim887-coder/django-notes-app.git"
+                echo 'Cloning the code'
+                git branch: 'main',
+                    url: 'https://github.com/rashmigmr13-eng/django-notes-app.git'
             }
         }
-        
-        stage("Build Docker Image"){
+
+        stage('Build Docker Image') {
             steps {
-                echo "Building Docker image"
-                sh "docker build -t $DOCKER_IMAGE ."
+                echo 'Building Docker image'
+                sh '''
+                  docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
             }
         }
-        
-        stage("Push to Docker Hub"){
+
+        stage('Tag Docker Image') {
             steps {
-                echo "Pushing image to Docker Hub"
-                
+                echo 'Tagging Docker image'
+                sh '''
+                  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE}
+                '''
+            }
+        }
+
+        stage('Push Image to DockerHub') {
+            steps {
+                echo 'Pushing image to DockerHub'
                 withCredentials([usernamePassword(
-                    credentialsId: "dockerHub",
-                    usernameVariable: "DOCKER_USER",
-                    passwordVariable: "DOCKER_PASS"
+                    credentialsId: 'dockerHub',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
                 )]) {
-                    
-                    sh "docker tag $DOCKER_IMAGE $DOCKER_USER/$DOCKER_IMAGE:latest"
-                    
-                    sh """
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-                    docker push $DOCKER_USER/$DOCKER_IMAGE:latest
-                    """
+                    sh '''
+                      echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                      docker push ${FULL_IMAGE}
+                    '''
                 }
             }
         }
-        
-        stage("Deploy to Kubernetes"){
+
+        stage('Deploy to Kubernetes') {
             steps {
-                
-                echo "Deploying to Kubernetes cluster"
-                
-                withKubeConfig(credentialsId: 'kubernetes') {
-                    
-                    sh "kubectl apply -f deployment.yaml"
-                    sh "kubectl apply -f service.yaml"
-                    
+                echo 'Deploying to Kubernetes'
+                withKubeConfig(credentialsId: 'kubeconfig') {
+                    sh '''
+                      kubectl apply -f notesapp/deployment.yaml
+                      kubectl apply -f notesapp/service.yaml
+                      kubectl rollout status deployment todo-deployment
+                    '''
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'CI/CD Pipeline completed successfully 🎉'
+        }
+        failure {
+            echo 'Pipeline failed ❌'
+        }
+        always {
+            sh 'docker logout || true'
         }
     }
 }
+
+
