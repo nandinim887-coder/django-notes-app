@@ -14,7 +14,7 @@ pipeline {
             steps {
                 echo 'Cloning the code'
                 git branch: 'main',
-                    url: 'https://github.com/rashmigmr13-eng/django-notes-app.git'
+                    url: 'https://github.com/nandinim887-coder/django-notes-app.git'
             }
         }
 
