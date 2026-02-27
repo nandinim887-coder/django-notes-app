@@ -57,7 +57,7 @@ pipeline {
                 echo 'Deploying to Kubernetes'
                 withKubeConfig(credentialsId: 'kubeconfig') {
                     sh '''
-                     microk8s kubectl apply -f notesapp/deployment.yaml
+                      kubectl apply -f notesapp/deployment.yaml
                       kubectl apply -f notesapp/service.yaml
                       kubectl rollout status deployment todo-deployment
                     '''
