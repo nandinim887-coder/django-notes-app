@@ -14,21 +14,25 @@ pipeline {
             steps {
                 echo 'Cloning the code'
                 git branch: 'main',
-                    url: 'https://github.com/nandinim887-coder/django-notes-app.git'
+                    url: 'https://github.com/rashmigmr13-eng/django-notes-app.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 echo 'Building Docker image'
-                sh 'docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .'
+                sh '''
+                  docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
             }
         }
 
         stage('Tag Docker Image') {
             steps {
                 echo 'Tagging Docker image'
-                sh 'docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE}'
+                sh '''
+                  docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${FULL_IMAGE}
+                '''
             }
         }
 
@@ -41,21 +45,23 @@ pipeline {
                     passwordVariable: 'DOCKERHUB_PASSWORD'
                 )]) {
                     sh '''
-                        echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-                        docker push ${FULL_IMAGE}
+                      echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                      docker push ${FULL_IMAGE}
                     '''
                 }
             }
         }
 
-        stage('Deploy to MicroK8s') {
+        stage('Deploy to Kubernetes') {
             steps {
-                echo 'Deploying to MicroK8s'
-                sh '''
-                    sudo microk8s kubectl apply -f notesapp/deployment.yaml
-                    sudo microk8s kubectl apply -f notesapp/service.yaml
-                    sudo microk8s kubectl rollout status deployment todo-deployment
-                '''
+                echo 'Deploying to Kubernetes'
+                withKubeConfig(credentialsId: 'kubeconfig') {
+                    sh '''
+                      kubectl apply -f notesapp/deployment.yaml
+                      kubectl apply -f notesapp/service.yaml
+                      kubectl rollout status deployment todo-deployment
+                    '''
+                }
             }
         }
     }
